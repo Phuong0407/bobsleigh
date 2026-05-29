@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+UINF="${UINF:-${1:-13.8945277777778}}"
+
+if [[ -f 0/U ]]; then
+    sed -i -E \
+    "s|^([[:space:]]*internalField[[:space:]]+)uniform[[:space:]]*\([^)]*\);|\1uniform (${UINF} 0 0);|" \
+    0/U
+else
+    echo "Warning: 0/U not found; skipping internalField."
+fi
+
+if [[ -f system/controlDict ]]; then
+    sed -i -E \
+    "s|^([[:space:]]*magUInf[[:space:]]+)[0-9.eE+-]+;|\1${UINF};|" \
+    system/controlDict
+else
+    echo "Error: system/controlDict not found." >&2
+    exit 1
+fi
+
+echo "UINF = ${UINF}"
+[[ -f 0/U ]] && grep -n "internalField" 0/U || true
+grep -n "magUInf" system/controlDict

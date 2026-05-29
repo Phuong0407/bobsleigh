@@ -1,0 +1,53 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM v2512                                  |
+|  \\    /   O peration     | Case: French Monobob with Athlete               |
+|   \\  /    A nd           | Author: Diep Thanh Phuong                       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version            2.0;
+  format             ascii;
+  class              volVectorField;
+  object             U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions           [0 1 -1 0 0 0 0];
+
+internalField        uniform (13.8945277777778 0 0);
+
+boundaryField
+{
+  inlet
+  {
+    type             fixedValue;
+    value            $internalField;
+  }
+
+  outlet
+  {
+    type             inletOutlet;
+    inletValue       $internalField;
+    value            $internalField;
+  }
+
+  bottom
+  {
+    type             noSlip;
+  }
+
+  "(top|front|back)"
+  {
+    type             symmetryPlane;
+  }
+
+  bob
+  {
+    type             noSlip;
+  }
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,140 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM v2512                                  |
+|  \\    /   O peration     | Case: French Monobob with Athlete               |
+|   \\  /    A nd           | Author: Diep Thanh Phuong                       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version            2.0;
+  format             ascii;
+  class              dictionary;
+  object             controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+application          simpleFoam;
+
+startFrom            latestTime;
+
+startTime            0;
+
+stopAt               endTime;
+
+endTime              5000;
+
+deltaT               1;
+
+writeControl         timeStep;
+
+writeInterval        100;
+
+purgeWrite           10;
+
+writeFormat          ascii;
+
+writePrecision       8;
+
+writeCompression     off;
+
+timeFormat           general;
+
+timePrecision        8;
+
+runTimeModifiable    true;
+
+functions
+{
+
+  forces
+  {
+    type             forces;
+    libs             ("libforces.so");
+
+    patches          (bob);
+
+    rho              rhoInf;
+    rhoInf           1.204;
+    CofR             (0 0 0);
+
+    log              yes;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    10;
+  }
+
+  forceCoeffs
+  {
+
+    type             forceCoeffs;
+    libs             ("libforces.so");
+    patches          (bob);
+    rho              rhoInf;
+    rhoInf           1.204;
+    CofR             (0 0 0);
+    dragDir          (1 0 0);
+    liftDir          (0 0 1);
+    pitchAxis        (0 1 0);
+    magUInf          30.7939166666667;
+    Aref             1;
+    lRef             1;
+
+    log              yes;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    10;
+
+  }
+
+  yPlus
+  {
+    type             yPlus;
+    libs             (fieldFunctionObjects);
+    patches          (bob bottom);
+
+    enabled          true;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    100;
+    log              yes;
+  }
+
+  wallShearStress
+  {
+    type             wallShearStress;
+    libs             (fieldFunctionObjects);
+    patches          (bob bottom);
+
+    enabled          true;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    100;
+    log              yes;
+  }
+
+  Q
+  {
+    type             Q;
+    libs             (fieldFunctionObjects);
+    field            U;
+    result           Q;
+
+    enabled          true;
+    writeControl     outputTime;
+  }
+
+  solverInfo
+  {
+    type             solverInfo;
+    libs             (utilityFunctionObjects);
+    writeControl     timeStep;
+    writeInterval    100;
+    fields           (p U k omega nut);
+  }
+
+}
+
+
+// ************************************************************************* //

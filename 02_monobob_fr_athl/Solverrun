@@ -1,0 +1,10 @@
+#!/bin/bash
+
+SOLVER=${1:-simpleFoam}
+NPROCS=$(foamDictionary system/decomposeParDict -entry numberOfSubdomains -value)
+DATE="$(date +%F_%H-%M-%S)"
+
+decomposePar -force                                     2>&1
+mpirun -np "$NPROCS" renumberMesh  -parallel -overwrite 2>&1
+mpirun -np "$NPROCS" potentialFoam -parallel -writep    2>&1
+mpirun -np "$NPROCS" "$SOLVER"     -parallel            2>&1 | tee -a "log.${SOLVER}.${DATE}"
