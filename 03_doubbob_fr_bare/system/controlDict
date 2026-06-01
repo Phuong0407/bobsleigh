@@ -77,14 +77,14 @@ functions
     dragDir          (1 0 0);
     liftDir          (0 0 1);
     pitchAxis        (0 1 0);
-    magUInf          25.0216111111111;
+    magUInf          30.9209444444444;
     Aref             1;
     lRef             1;
 
     log              yes;
     timeStart        50;
     writeControl     timeStep;
-    writeInterval    10;
+    writeInterval    1;
 
   }
 

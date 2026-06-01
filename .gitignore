@@ -1,6 +1,8 @@
 !*/
-
 !.gitignore
+
+00_result
+
 !README.md
 **/0/**
 

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+[[ $# -lt 2 ]] && { echo "Usage: $0 <case> <velocity>"; exit 1; }
+
+CASE="$1"
+VELO="$2"
+
+cd "$CASE" || { echo "ERROR: cannot cd into $CASE"; exit 1; }
+
+[[ -f "constant/polyMesh/faces" ]] || {
+    echo "Mesh not found, generating..."
+    ./Allclean || { echo "ERROR: Allclean failed"; exit 1; }
+    ./Meshrun  || { echo "ERROR: Meshrun failed";  exit 1; }
+    echo "Mesh generated"
+}
+
+./Solverclean       || { echo "ERROR: Solverclean failed"; exit 1; }
+./Velchange "$VELO" || { echo "ERROR: VelChange failed";   exit 1; }
+./Solverrun         || { echo "ERROR: Solverrun failed";   exit 1; }
+
+cd ..
+
+cp "$CASE/postProcessing/forces/0/force.dat"            "00_result/force.${CASE}.${VELO}.dat"
+cp "$CASE/postProcessing/forceCoeffs/0/coefficient.dat" "00_result/coefficient.${CASE}.${VELO}.dat"

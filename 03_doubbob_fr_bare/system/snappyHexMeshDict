@@ -1,0 +1,198 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM v2512                                  |
+|  \\    /   O peration     | Case: French Monobob with Athlete               |
+|   \\  /    A nd           | Author: Diep Thanh Phuong                       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version            2.0;
+  format             ascii;
+  class              dictionary;
+  object             snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+castellatedMesh true;
+snap            true;
+addLayers       true;
+
+geometry
+{
+    bob.stl
+    {
+        type triSurfaceMesh;
+        name bob;
+    }
+
+    body
+    {
+        type searchableBox;
+        min  (-1.8 -0.7   0);
+        max  ( 1.8  0.7 1.5);
+    }
+
+    separation
+    {
+        type searchableBox;
+        min  (-2.5 -1.2   0);
+        max  ( 3.5  1.2 1.8);
+    }
+
+    wake
+    {
+        type searchableBox;
+        min  (-7.5 -1.5   0);
+        max  (20.0  1.5 2.0);
+    }
+}
+
+castellatedMeshControls
+{
+    locationInMesh             (5.00001 1.00001 1.00001);
+
+    maxLocalCells              250000;
+    maxGlobalCells             5000000;
+    minRefinementCells         0;
+    maxLoadUnbalance           0.1;
+    nCellsBetweenLevels        3;
+    resolveFeatureAngle        60;
+    allowFreeStandingZoneFaces true;
+
+    features
+    (
+/*
+        {
+            file "bob.eMesh";
+            level 2;
+        }
+*/
+    );
+
+    refinementSurfaces
+    {
+        bob
+        {
+            level (2 2);
+
+            patchInfo
+            {
+                type wall;
+            }
+        }
+    }
+
+    refinementRegions
+    {
+/*
+        wake
+        {
+            mode inside;
+            levels ((1e15 2));
+        }
+
+        separation
+        {
+            mode inside;
+            levels ((1e15 2));
+        }
+
+        body
+        {
+            mode inside;
+            levels ((1e15 3));
+        }
+*/
+    }
+}
+
+snapControls
+{
+    nSmoothPatch               10;
+    tolerance                  1.0;
+    nSolveIter                 80;
+    nRelaxIter                 10;
+
+    nFeatureSnapIter           0;
+    implicitFeatureSnap        false;
+    explicitFeatureSnap        false;
+    multiRegionFeatureSnap     false;
+}
+
+addLayersControls
+{
+    layers
+    {
+        "bob.*"
+        {
+            nSurfaceLayers     1;
+        }
+    }
+
+    relativeSizes              false;
+    expansionRatio             1.2;
+
+    firstLayerThickness        0.001;
+    minThickness               0.0003;
+
+    nGrow                      2;
+
+    featureAngle               70;
+    slipFeatureAngle           45;
+
+    nSmoothSurfaceNormals      5;
+    nSmoothNormals             5;
+    nSmoothThickness           10;
+    
+    nRelaxIter                 5;
+    maxFaceThicknessRatio      0.5;
+    maxThicknessToMedialRatio  0.3;
+    minMedialAxisAngle         90;
+    minMedianAxisAngle         90;
+    nBufferCellsNoExtrude      3;
+
+    nLayerIter                 30;
+    nRelaxedIter               10;
+}
+
+meshQualityControls
+{
+    maxNonOrtho                80;
+    maxBoundarySkewness        4;
+    maxInternalSkewness        4;
+    maxConcave                 70;
+
+    minVol                     1e-13;
+    minTetQuality              1e-9;
+    minArea                    -1;
+    minTwist                   0.02;
+    minTriangleTwist           -1;
+    minDeterminant             0.001;
+    minFaceWeight              0.05;
+    minVolRatio                0.01;
+    minFlatness                0.5;
+
+    nSmoothScale               6;
+    errorReduction             0.75;
+
+    relaxed
+    {
+        maxNonOrtho            80;
+        maxBoundarySkewness    8;
+        maxInternalSkewness    4;
+    }
+}
+
+writeFlags
+(
+    scalarLevels
+    layerSets
+    layerFields
+);
+
+mergeTolerance 1e-6;
+
+
+// ************************************************************************* //
