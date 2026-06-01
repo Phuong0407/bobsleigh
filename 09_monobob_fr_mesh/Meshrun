@@ -1,0 +1,12 @@
+#!/bin/bash
+
+NPROCS=$(foamDictionary system/decomposeParDict -entry numberOfSubdomains -value)
+DATE="$(date +%F_%H-%M-%S)"
+
+cp -r orig 0
+
+blockMesh                                               2>&1 | tee -a "log.blockmesh.${DATE}"
+surfaceFeatureExtract                                   2>&1
+decomposePar                                            2>&1
+mpirun -np $NPROCS snappyHexMesh -parallel -overwrite   2>&1 | tee -a "log.snappy.${DATE}"
+reconstructParMesh -constant                            2>&1

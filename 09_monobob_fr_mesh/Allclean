@@ -1,0 +1,18 @@
+#!/bin/bash
+rm -rf 0
+
+rm -rf constant/polyMesh
+rm -rf constant/extendedFeatureEdgeMesh
+
+rm -rf postProcessing
+rm -rf processor*
+rm -rf VTK
+
+rm -rf *.vtp
+rm -rf *.vtk
+rm -rf *.vtu
+
+rm *log*
+rm *.foam
+
+rm -rf dynamicCode

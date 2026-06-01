@@ -1,0 +1,121 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM v2512                                  |
+|  \\    /   O peration     | Case: French Monobob with Athlete               |
+|   \\  /    A nd           | Author: Diep Thanh Phuong                       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version          2.0;
+  format           ascii;
+  class            dictionary;
+  object           blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+xmin  -12;
+xmax   20;
+ymin -2.5;
+ymax  2.5;
+zmin    0;
+zmax  5.0;
+
+deltax 0.125;
+deltay 0.125;
+deltaz 0.125;
+
+lx #calc "($xmax) - ($xmin)";
+ly #calc "($ymax) - ($ymin)";
+lz #calc "($zmax) - ($zmin)";
+
+xcells #calc "round(($lx)/($deltax))";
+ycells #calc "round(($ly)/($deltay))";
+zcells #calc "round(($lz)/($deltaz))";
+
+
+vertices
+(
+  ($xmin  $ymin  $zmin)
+  ($xmax  $ymin  $zmin)
+  ($xmax  $ymax  $zmin)
+  ($xmin  $ymax  $zmin)
+  ($xmin  $ymin  $zmax)
+  ($xmax  $ymin  $zmax)
+  ($xmax  $ymax  $zmax)
+  ($xmin  $ymax  $zmax)
+);
+
+blocks
+(
+  hex (0 1 2 3 4 5 6 7) ($xcells $ycells $zcells) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+  inlet
+  {
+    type patch;
+    faces
+    (
+      (0 4 7 3)
+    );
+  }
+
+  outlet
+  {
+    type patch;
+    faces
+    (
+      (1 2 6 5)
+    );
+  }
+
+  top
+  {
+    type symmetryPlane;
+    faces
+    (
+      (4 5 6 7)
+    );
+  }
+
+  bottom
+  {
+    type wall;
+    faces
+    (
+      (0 3 2 1)
+    );
+  }
+
+  front
+  {
+    type symmetryPlane;
+    faces
+    (
+      (0 1 5 4)
+    );
+  }
+  back
+  {
+    type symmetryPlane;
+    faces
+    (
+      (2 3 7 6)
+    );
+  }
+);
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

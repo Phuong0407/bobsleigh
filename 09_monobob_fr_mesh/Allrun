@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SOLVER=${1:-simpleFoam}
+NPROCS=$(foamDictionary system/decomposeParDict -entry numberOfSubdomains -value)
+DATE="$(date +%F_%H-%M-%S)"
+
+cp -r orig 0
+
+blockMesh                                               2>&1 | tee -a "log.block.${DATE}"
+surfaceFeatureExtract                                   2>&1
+decomposePar                                            2>&1
+mpirun -np $NPROCS snappyHexMesh -parallel -overwrite   2>&1 | tee -a "log.snappy.${DATE}"
+reconstructParMesh -constant                            2>&1
+
+decomposePar -force                                     2>&1
+mpirun -np "$NPROCS" renumberMesh  -parallel -overwrite 2>&1
+mpirun -np "$NPROCS" potentialFoam -parallel -writep    2>&1
+mpirun -np "$NPROCS" "$SOLVER"     -parallel            2>&1 | tee -a "log.${SOLVER}.${DATE}"

@@ -1,0 +1,35 @@
+grep -rlIF "" . | xargs sed -i 's/ / /g'
+
+blockMesh
+
+decomposePar
+
+mpirun -np 16 snappyHexMesh -parallel -overwrite
+
+reconstructParMesh -constant
+
+checkMesh
+checkMesh -allGeometry -allTopology -writeAllFields
+mpirun -np 18 checkMesh -allGeometry -allTopology -writeAllFields -writeSets vtk -parellel 2>&1 | tee -a "log.checkmesh.$(date +%y-%m-%d_%H-%M-%S)"
+foamToVTK
+
+foamToVTK -faceSet skewFaces
+foamToVTK -faceSet nonOrthoFaces
+foamToVTK -surfaceFields
+
+decomposePar -fields -time 0
+
+export SOLVER=simpleFoam;
+NPROCS=$(foamDictionary system/decomposeParDict -entry numberOfSubdomains -value);
+mpirun -np "$NPROCS" renumberMesh  -parallel -overwrite 2>&1
+mpirun -np "$NPROCS" potentialFoam -parallel -writep    2>&1
+mpirun -np "$NPROCS" "$SOLVER"     -parallel            2>&1 | tee -a "log.${SOLVER}.$(date +%y-%m-%d_%H-%M-%S)";
+
+
+
+
+
+mkdir constant/triSurface
+
+surfaceTransformPoints -translate "(0 0 0.2)"       geometry/monobob.stl constant/triSurface/monobob.stl
+surfaceTransformPoints -scale "(0.001 0.001 0.001)" geometry/monobob.stl constant/triSurface/monobob.stl

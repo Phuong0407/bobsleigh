@@ -1,0 +1,33 @@
+#!/bin/bash
+
+rm -rf processor*
+
+find . -maxdepth 1 -type d       \
+    -regextype posix-extended    \
+    -regex './[0-9]+(\.[0-9]+)?' \
+    ! -name "0"                  \
+    -exec rm -rf {} +
+
+rm -rf 0/*.gz
+
+rm -rf postProcessing
+
+rm -f log.simpleFoam*
+rm -f log.pimpleFoam*
+rm -f log.pisoFoam*
+rm -f log.potentialFoam*
+rm -f log.rhoSimpleFoam*
+rm -f log.sonicFoam*
+
+rm -f *.foam
+rm -f paraFoam.foam
+rm -f cellLevel
+rm -f pointLevel
+
+rm -rf dynamicCode
+
+rm -rf surfaces
+rm -rf sets
+
+rm -f residuals.dat
+rm -f residuals*

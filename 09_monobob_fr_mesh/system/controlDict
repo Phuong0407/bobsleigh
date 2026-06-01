@@ -1,0 +1,211 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM v2512                                  |
+|  \\    /   O peration     | Case: French Monobob with Athlete               |
+|   \\  /    A nd           | Author: Diep Thanh Phuong                       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version            2.0;
+  format             ascii;
+  class              dictionary;
+  object             controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+application          simpleFoam;
+
+startFrom            latestTime;
+
+startTime            0;
+
+stopAt               endTime;
+
+endTime              1800;
+
+deltaT               1;
+
+writeControl         timeStep;
+
+writeInterval        100;
+
+purgeWrite           10;
+
+writeFormat          ascii;
+
+writePrecision       8;
+
+writeCompression     off;
+
+timeFormat           general;
+
+timePrecision        8;
+
+runTimeModifiable    true;
+
+functions
+{
+
+  forces
+  {
+    type             forces;
+    libs             ("libforces.so");
+
+    patches          (bob);
+
+    rho              rhoInf;
+    rhoInf           1.204;
+    CofR             (0 0 0);
+
+    log              yes;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    1;
+  }
+
+  forceCoeffs
+  {
+
+    type             forceCoeffs;
+    libs             ("libforces.so");
+    patches          (bob);
+    rho              rhoInf;
+    rhoInf           1.204;
+    CofR             (0 0 0);
+    dragDir          (1 0 0);
+    liftDir          (0 0 1);
+    pitchAxis        (0 1 0);
+    magUInf          13.8945277777778;
+    Aref             1;
+    lRef             1;
+
+    log              yes;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    1;
+
+  }
+
+  yPlus
+  {
+    type             yPlus;
+    libs             (fieldFunctionObjects);
+    patches          (bob bottom);
+
+    enabled          true;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    100;
+    log              yes;
+  }
+
+  wallShearStress
+  {
+    type             wallShearStress;
+    libs             (fieldFunctionObjects);
+    patches          (bob bottom);
+
+    enabled          true;
+    timeStart        50;
+    writeControl     timeStep;
+    writeInterval    100;
+    log              yes;
+  }
+
+  Q
+  {
+    type             Q;
+    libs             (fieldFunctionObjects);
+    field            U;
+    result           Q;
+
+    enabled          true;
+    writeControl     outputTime;
+  }
+
+  solverInfo
+  {
+    type             solverInfo;
+    libs             (utilityFunctionObjects);
+    writeControl     timeStep;
+    writeInterval    100;
+    fields           (p U k omega nut);
+  }
+
+  nearWallThickness
+  {
+    type      coded;
+    libs      ("libutilityFunctionObjects.so");
+    name      nearWallThickness;
+    timeStart 0;
+    timeEnd   0;
+
+    codeExecute
+    #{
+      const fvMesh& mesh = refCast<const fvMesh>(obr_);
+      const label pID = mesh.boundaryMesh().findPatchID("bob");
+      if (pID < 0) { Info<< "patch bobsleigh not found\n"; return true; }
+
+      const fvPatch& p = mesh.boundary()[pID];
+      const labelUList& fc = p.faceCells();
+      const scalarField& magSf = p.magSf();
+      const scalarField& V = mesh.V();
+
+      scalar tmin = GREAT, tmax = -GREAT, tsum = 0; label n = 0;
+      forAll(fc, i)
+      {
+        const scalar t = V[fc[i]]/magSf[i];
+        tmin = min(tmin, t); tmax = max(tmax, t); tsum += t; ++n;
+      }
+      reduce(tmin, minOp<scalar>()); reduce(tmax, maxOp<scalar>());
+      reduce(tsum, sumOp<scalar>()); reduce(n, sumOp<label>());
+
+      Info << "=== bobsleigh first-cell wall-normal thickness ===" << nl
+           << "  min  = " << tmin   << "  (y_centroid = " << 0.5*tmin   << ")" << nl
+           << "  mean = " << tsum/n << "  (y_centroid = " << 0.5*tsum/n << ")" << nl
+           << "  max  = " << tmax   << "  (y_centroid = " << 0.5*tmax   << ")" << nl
+           << "  faces = " << n << endl;
+
+      volScalarField wallT
+      (
+          IOobject("wallT", mesh.time().timeName(), mesh,
+                   IOobject::NO_READ, IOobject::AUTO_WRITE),
+          mesh, dimensionedScalar("0", dimLength, 0)
+      );
+      volScalarField::Boundary& bf = wallT.boundaryFieldRef();
+      forAll(fc, i) { bf[pID][i] = V[fc[i]]/magSf[i]; }
+      wallT.write();
+
+     // --- phân bố area-weighted của t = V/A ---
+      const scalar fl = 0.001;                  // firstLayerThickness target
+      scalar e[6] = {0, 1.5*fl, 3*fl, 10*fl, 50*fl, GREAT};
+      scalar aBin[5] = {0,0,0,0,0};
+      scalar Atot = 0;
+      forAll(fc, i)
+      {
+          const scalar t = V[fc[i]]/magSf[i];
+          const scalar a = magSf[i];
+          Atot += a;
+          for (label b = 0; b < 5; ++b)
+              if (t >= e[b] && t < e[b+1]) { aBin[b] += a; break; }
+      }
+      reduce(Atot, sumOp<scalar>());
+      for (label b = 0; b < 5; ++b) reduce(aBin[b], sumOp<scalar>());
+
+      Info<< "=== wallT area-weighted distribution (patch bob) ===" << nl;
+      Info<< "  <1.5mm  (full)    : " << 100*aBin[0]/Atot << " %" << nl;
+      Info<< "  1.5-3mm (partial) : " << 100*aBin[1]/Atot << " %" << nl;
+      Info<< "  3-10mm  (poor)    : " << 100*aBin[2]/Atot << " %" << nl;
+      Info<< "  10-50mm (bare)    : " << 100*aBin[3]/Atot << " %" << nl;
+      Info<< "  >50mm   (bare)    : " << 100*aBin[4]/Atot << " %" << nl;
+      Info<< "  COVERAGE (t<3mm)  : " << 100*(aBin[0]+aBin[1])/Atot << " %" << endl;
+
+    #};
+  }
+
+}
+
+
+// ************************************************************************* //
