@@ -22,7 +22,7 @@ solvers
     preconditioner
     {
       preconditioner         GAMG;
-      tolerance              1e-06;
+      tolerance              1e-6;
       relTol                 0;
       nVcycles               2;
       smoother               GaussSeidel;
@@ -34,7 +34,7 @@ solvers
       agglomerator           faceAreaPair;
       mergeLevels            1;
     }
-    tolerance                1e-06;
+    tolerance                1e-6;
     relTol                   0.01;
     minIter                  1;
   }
@@ -42,25 +42,25 @@ solvers
   pFinal
   {
     $p;
-    tolerance                1e-08;
+    tolerance                1e-8;
     relTol                   0;
   }
-
-  U
-  {
-    solver                   PBiCGStab;
-    preconditioner           DILU;
-    tolerance                1e-06;
-    relTol                   0.01;
-    minIter                  1;
-  }
-
-  "(nuTilda|k|omega)"
+ 
+  "(nuTilda|k|omega|U)"
   {
     solver                   PBiCGStab;
     preconditioner           DILU;
     tolerance                1e-6;
     relTol                   0.01;
+    minIter                  1;
+  }
+
+  "(nuTilda|k|omega|U)Final"
+  {
+    solver                   PBiCGStab;
+    preconditioner           DILU;
+    tolerance                1e-6;
+    relTol                   0;
     minIter                  1;
   }
 
@@ -101,6 +101,13 @@ SIMPLE
     k                        1e-3;
     omega                    1e-3;
   }
+}
+
+PIMPLE
+{
+  nOuterCorrectors           2;
+  nCorrectors                2;
+  nNonOrthogonalCorrectors   1;
 }
 
 relaxationFactors

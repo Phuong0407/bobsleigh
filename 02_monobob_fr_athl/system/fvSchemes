@@ -16,7 +16,8 @@ FoamFile
 
 ddtSchemes
 {
-  default                        steadyState;
+//  default                        steadyState;
+  default                        backward;
 }
 
 gradSchemes
